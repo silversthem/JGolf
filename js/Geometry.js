@@ -14,6 +14,18 @@ function rectFromLine(path,width) {
   ]
 }
 
+function widenPath(path,width) {
+  let front = []
+  let back  = []
+  for(let i = 0;i < path.length - 1;i++) {
+    let rect = rectFromLine({'from':path[i],'to':path[i+1]},width)
+    front.push(rect[0],rect[1])
+    back.unshift(rect[3])
+    back.unshift(rect[2])
+  }
+  return front.concat(back)
+}
+
 function formatRect(bounds,center,rect) {
   let c = this.coords2center(bounds,center,rect[0])
   let w = Math.abs(rect[0][0] - rect[2][0])

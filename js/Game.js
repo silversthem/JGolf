@@ -5,10 +5,12 @@ function Game(canvasid,playerid) {
   }
   this.levelData = {
     "elements":[
-      {"type":"fairway","path":{"from":[-300,-300],"to":[300,-300]},"width":40,"closed":true}
+      {"type":"fairway","path":[[-300,-300],[300,-300],[300,300]],"width":80,"closed":true,"curved":true},
+      {"type":"water","shape":"polygon","coords":[260,180],"points":[[0,0],[-30,30],[0,60],[30,30]],"curve":15},
+      {"type":"obstacle","obstacle":"crate","coords":[260,300]}
     ],
     "starter":{"coords":[-280,-300]},
-    "hole":{"coords":[280,-300],"type":"default"}
+    "hole":{"coords":[300,280],"type":"default"}
   }
   /* DOM */
   this.powerBar = document.getElementById('powerBar')

@@ -50,24 +50,24 @@ function Level(canvasid,textures,lvldata,updateCallback) {
 
   // Detects bouncing on a prop
   this.bounceMotion = (player) => {
-    for(let i in this.level.elements) {
-      let prop = this.level.elements[i]
-      if(prop.type == "fairway") {
-        if(prop.closed) { // Fairway with solid borders
-          let rfl = rectFromLine(prop.path,prop.width)
-          // Check if it bounces on a border
-          for(let j = 0;j < 4;j++) {
-            let line = [rfl[j],rfl[(j + 1) % 4]]
-            if(distance2line(player.coords,line) <= this.ballSize) { // ball touched a border
-              if(player.bouncedFrom == undefined || !sameLine(player.bouncedFrom,line)) {
-                player.speed = reflect(player.speed,normal(line2vec(line)))
-              }
-              player.bouncedFrom = line
-            }
-          }
-        }
-      }
-    }
+    // for(let i in this.level.elements) {
+    //   let prop = this.level.elements[i]
+    //   if(prop.type == "fairway") {
+    //     if(prop.closed) { // Fairway with solid borders
+    //       let rfl = rectFromLine(prop.path,prop.width)
+    //       // Check if it bounces on a border
+    //       for(let j = 0;j < 4;j++) {
+    //         let line = [rfl[j],rfl[(j + 1) % 4]]
+    //         if(distance2line(player.coords,line) <= this.ballSize) { // ball touched a border
+    //           if(player.bouncedFrom == undefined || !sameLine(player.bouncedFrom,line)) {
+    //             player.speed = reflect(player.speed,normal(line2vec(line)))
+    //           }
+    //           player.bouncedFrom = line
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
     return player
   }
 
@@ -105,18 +105,11 @@ function Level(canvasid,textures,lvldata,updateCallback) {
 
   // Draw props
   this.drawProp = (center,prop) => {
-    if(prop.type == "fairway") { // Simple fairway rectangle
-      let rfl = rectFromLine(prop.path,prop.width)
-      if(inBounds(this.size,center,[rfl[0],rfl[3]])) {
-        rfl = rfl.map((x) => coords2center(this.size,center,x))
-        this.context.beginPath()
-        this.context.moveTo(rfl[0][0],rfl[0][1])
-        this.context.lineTo(rfl[1][0],rfl[1][1])
-        this.context.lineTo(rfl[2][0],rfl[2][1])
-        this.context.lineTo(rfl[3][0],rfl[3][1])
-        this.context.fillStyle = this.context.createPattern(this.texturesBank.fairway,'repeat')
-        this.context.fill()
-      }
+    if(prop.type == "fairway") { // Simple fairway path
+      let path = widenPath(prop.path,prop.width)
+      // @TODO : handle closed and curved
+      path = path.map((x) => {return coords2center(this.size,center,x)})
+      drawTexturedPath(this.context,path,this.texturesBank.fairway)
     }
   }
 
