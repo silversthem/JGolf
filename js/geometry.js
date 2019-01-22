@@ -1,38 +1,44 @@
-function rectFromLine(path,width) {
+// Returns the first corners of a rectangle centered around a line
+function rectFromLine(line,width) {
   let m = width/2
-  let x = path.to[0] - path.from[0]
-  let y = path.to[1] - path.from[1]
+  let x = line[1][0] - line[0][0]
+  let y = line[1][1] - line[0][1]
   let t = Math.atan2(y,x)
   let t2 = t + Math.PI/2
   let a = Math.cos(t2)
   let b = Math.sin(t2)
   return [
-    [path.from[0] - a*m,path.from[1] - b*m],
-    [path.to[0] - a*m,path.to[1] - b*m],
-    [path.to[0] + a*m,path.to[1] + b*m],
-    [path.from[0] + a*m,path.from[1] + b*m],
+    [line[0][0] - a*m,line[0][1] - b*m],
+    [line[1][0] - a*m,line[1][1] - b*m],
+    [line[1][0] + a*m,line[1][1] + b*m],
+    [line[0][0] + a*m,line[0][1] + b*m],
   ]
 }
 
+// Returns each corner of a wide path
 function widenPath(path,width) {
   let front = []
   let back  = []
   for(let i = 0;i < path.length - 1;i++) {
-    let rect = rectFromLine({'from':path[i],'to':path[i+1]},width)
+    let rect = rectFromLine([path[i],path[i+1]],width)
     front.push(rect[0],rect[1])
     back.unshift(rect[3])
     back.unshift(rect[2])
   }
-  return front.concat(back)
+  front = front.concat(back)
+  for(let i = 0;i < (front.length - 3);i++) {
+    let ln  = [front[i],front[i+1]]
+    let nln = [front[i+2],front[i+3]]
+    let interp = intersection(ln,nln)
+    if(!Number.isNaN(interp)) {
+      front.splice(i+2,1)
+      front[i+1] = interp
+    }
+  }
+  return front
 }
 
-function formatRect(bounds,center,rect) {
-  let c = this.coords2center(bounds,center,rect[0])
-  let w = Math.abs(rect[0][0] - rect[2][0])
-  let h = Math.abs(rect[0][1] - rect[2][1])
-  return [c[0],c[1],w,h]
-}
-
+// Returns coords relative to box center to draw on
 function coords2center(bounds,center,coords) {
   let mid = [bounds.w/2,bounds.h/2]
   return [center[0] + coords[0] + mid[0],center[1] + coords[1] + mid[0]]
@@ -141,14 +147,23 @@ function intersection(l1,l2) {
       // find intersection
       let x = (f1[1] - f2[1])/(f2[0] - f1[0])
       let y = f1[0]*x + f1[1]
-      // Check if its bounds
-      let xmin = Math.min(Math.min(l1[0][0],l1[1][0]),Math.min(l2[0][0],l2[1][0]))
-      let xmax = Math.max(Math.max(l1[0][0],l1[1][0]),Math.max(l2[0][0],l2[1][0]))
-      if(xmin <= x && x <= xmax) {
+      let p = [x,y]
+      // Check if in bounds
+      if(onLine(p,l1) || onLine(p,l2)) {
         // Returns pair
         return [x,y]
       }
-      return NaN
     }
   }
+  return NaN
+}
+
+// If number is in interval
+function inInterval(n,int) {
+  return (Math.min(int[0],int[1]) <= n && Math.max(int[0],int[1]) >= n)
+}
+
+// If point is on line
+function onLine(p,l) {
+  return inInterval(p[0],[l[0][0],l[1][0]]) && inInterval(p[1],[l[0][1],l[1][1]])
 }

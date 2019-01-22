@@ -1,3 +1,7 @@
+/*
+  Main Level Class
+*/
+
 function Level(canvasid,textures,lvldata,updateCallback) {
   /* Properties */
   this.size = {'h':800,'w':800}
@@ -50,24 +54,24 @@ function Level(canvasid,textures,lvldata,updateCallback) {
 
   // Detects bouncing on a prop
   this.bounceMotion = (player) => {
-    // for(let i in this.level.elements) {
-    //   let prop = this.level.elements[i]
-    //   if(prop.type == "fairway") {
-    //     if(prop.closed) { // Fairway with solid borders
-    //       let rfl = rectFromLine(prop.path,prop.width)
-    //       // Check if it bounces on a border
-    //       for(let j = 0;j < 4;j++) {
-    //         let line = [rfl[j],rfl[(j + 1) % 4]]
-    //         if(distance2line(player.coords,line) <= this.ballSize) { // ball touched a border
-    //           if(player.bouncedFrom == undefined || !sameLine(player.bouncedFrom,line)) {
-    //             player.speed = reflect(player.speed,normal(line2vec(line)))
-    //           }
-    //           player.bouncedFrom = line
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
+    for(let i in this.level.elements) {
+      let prop = this.level.elements[i]
+      if(prop.type == "fairway") {
+        if(prop.closed) { // Fairway with solid borders
+          let points = widenPath(prop.path,prop.width)
+          // Check if it bounces on a border
+          for(let j = 0;j < points.length;j++) {
+            let line = [points[j],points[(j + 1) % points.length]]
+            if(distance2line(player.coords,line) <= this.ballSize) { // ball touched a border
+              if(player.bouncedFrom == undefined || !sameLine(player.bouncedFrom,line)) {
+                player.speed = reflect(player.speed,normal(line2vec(line)))
+              }
+              player.bouncedFrom = line
+            }
+          }
+        }
+      }
+    }
     return player
   }
 
@@ -115,36 +119,17 @@ function Level(canvasid,textures,lvldata,updateCallback) {
 
   // Draws starter
   this.drawStarter = (coords) => {
-    this.context.lineWidth = 3
-    this.context.strokeStyle = 'yellow'
-    this.context.beginPath()
-    this.context.moveTo(coords[0] - 10,coords[1] - 10)
-    this.context.lineTo(coords[0] + 10,coords[1] + 10)
-    this.context.moveTo(coords[0] + 10,coords[1] - 10)
-    this.context.lineTo(coords[0] - 10,coords[1] + 10)
-    this.context.stroke()
+    drawCross(this.context,coords,10,3,'yellow')
   }
 
   // Draws hole
   this.drawHole = (coords) => {
-    this.context.lineWidth = 1
-    this.context.strokeStyle = 'black'
-    this.context.beginPath()
-    this.context.arc(coords[0],coords[1],this.holeSize,0,2 * Math.PI)
-    this.context.fillStyle = 'black'
-    this.context.fill()
-    this.context.stroke()
+    drawCircle(this.context,coords,this.holeSize,1,'black','black')
   }
 
   // Draws a player ball
   this.drawPlayer = (coords,color) => {
-    this.context.lineWidth = 1
-    this.context.strokeStyle = 'black'
-    this.context.beginPath()
-    this.context.arc(coords[0],coords[1],this.ballSize,0,2 * Math.PI)
-    this.context.fillStyle = color
-    this.context.fill()
-    this.context.stroke()
+    drawCircle(this.context,coords,this.ballSize,1,color,'black')
   }
 
   // Draws the club
