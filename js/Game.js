@@ -9,12 +9,12 @@ function Game(canvasid,playerid) {
   }
   this.levelData = {
     "elements":[
-      {"type":"fairway","path":[[-300,-300],[300,-100],[-300,100],[300,300]],"width":80,"closed":true,"curved":true},
-      {"type":"water","shape":"polygon","coords":[260,180],"points":[[0,0],[-30,30],[0,60],[30,30]],"curve":15},
-      {"type":"obstacle","obstacle":"crate","coords":[260,300]}
+      {"type":"fairway","path":[[-300,-300],[300,-300],[300,0],[-300,0],[-300,300],[300,300]],"width":100,"closed":true,"curved":true,"z":1},
+      {"type":"water","shape":"polygon","coords":[260,180],"points":[[0,0],[-30,30],[0,60],[30,30]],"curve":15,"z":2},
+      {"type":"obstacle","obstacle":"crate","coords":[260,300],"z":2}
     ],
-    "starter":{"coords":[-280,-293]},
-    "hole":{"coords":[280,293],"type":"default"}
+    "starter":{"coords":[-280,-300]},
+    "hole":{"coords":[280,300],"type":"default"}
   }
   /* DOM */
   this.powerBar  = document.getElementById('powerBar')
@@ -23,12 +23,11 @@ function Game(canvasid,playerid) {
   this.this_player = playerid // This player
   this.current_player = playerid // The player currently playing
   this.level = new Level('GameCanvas',this.texturesBank,this.levelData,() => {
-    this.update() // Updates game
     return {'players':this.players,'club':this.club}
   })
-  this.players = {0:{'coords':[-280,-293],'color':'#0000ff','shot':0,'speed':[0,0]}} // Players list
+  this.players = {0:{'coords':[-280,-300],'color':'#0000ff','shot':0,'speed':[0,0]}} // Players list
   // Club object
-  this.club = {'orientation':0.33,'power':0,'onHold':false,'turning':0,'inMotion':false,'display':true}
+  this.club = {'orientation':0,'power':0,'onHold':false,'turning':0,'inMotion':false,'display':true}
 
   /* Event listenning */
 
@@ -67,9 +66,8 @@ function Game(canvasid,playerid) {
   /* Physics */
 
   // Emulates friction on a speed vector
-  this.slowDown = (v) => {
-    let d = 0.05
-    let dd = 0.97
+  this.slowDown = (v,dd = 0.975) => {
+    let d = 0.1
     v = [v[0]*dd,v[1]*dd]
     if(Math.abs(v[0]) < d) v[0] = 0
     if(Math.abs(v[1]) < d) v[1] = 0
@@ -77,7 +75,7 @@ function Game(canvasid,playerid) {
   }
 
   // Updates balls position in level
-  this.update = () => {
+  this.update = (ticks) => {
     /* Collisions & interactions */
     this.players[this.current_player] = this.level.bounceMotion(this.players[this.current_player])
     /* Motion update */
@@ -100,31 +98,40 @@ function Game(canvasid,playerid) {
 
   /* Code */
 
+  this.locked = false // Thread lock
+
+  // Main function
+  this.run = () => {
+    while(this.locked) {console.log('locked')}
+    this.locked = true
+    if(!this.club.inMotion && this.club.display) { // Init shot
+      this.powerBar.value = 0
+    }
+    if(this.club.onHold && this.club.display) { // Loading shot (adding power)
+      this.club.power = (this.club.power + 2) % this.powerBar.max
+      this.powerBar.value = this.club.power % this.powerBar.max
+    }
+    if(this.club.turning != 0) { // Adjusting shot angle
+      this.club.orientation += 0.03*this.club.turning
+    }
+    if(this.club.inMotion != false) { // Starting shot animation
+      this.club.inMotion -= 5
+      if(this.club.inMotion <= 0) { // Shot fired
+        this.play(this.club) // Giving ball speed
+        // Reset
+        this.club.power = 0
+        this.club.display = false
+        this.club.inMotion = 0
+        this.onHold = false
+      }
+    }
+    this.update(1) // Updates level
+    this.level.draw([0,0]) // Draws level
+    this.locked = false
+  }
+
   // Loads level and starts game
   this.level.loadLevel(() => {
-    setInterval(() => {
-      if(!this.club.inMotion && this.club.display) { // Init shot
-        this.powerBar.value = 0
-      }
-      if(this.club.onHold && this.club.display) { // Loading shot (adding power)
-        this.club.power = (this.club.power + 2) % this.powerBar.max
-        this.powerBar.value = this.club.power % this.powerBar.max
-      }
-      if(this.club.turning != 0) { // Adjusting shot angle
-        this.club.orientation += 0.03*this.club.turning
-      }
-      if(this.club.inMotion != false) { // Starting shot animation
-        this.club.inMotion -= 5
-        if(this.club.inMotion <= 0) { // Shot fired
-          this.play(this.club) // Giving ball speed
-          // Reset
-          this.club.power = 0
-          this.club.display = false
-          this.club.inMotion = 0
-          this.onHold = false
-        }
-      }
-      this.level.draw([0,0]) // Draws level
-    },33)
+    setInterval(this.run,33)
   })
 }

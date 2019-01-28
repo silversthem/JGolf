@@ -52,8 +52,14 @@ function Level(canvasid,textures,lvldata,updateCallback) {
 
   }
 
+  this.collides = (player) => {
+
+  }
+
   // Detects bouncing on a prop
   this.bounceMotion = (player) => {
+    let pc = [player.coords[0],player.coords[1]]
+    let motionVec = [pc,translate(pc,player.speed)]
     for(let i in this.level.elements) {
       let prop = this.level.elements[i]
       if(prop.type == "fairway") {
@@ -62,11 +68,26 @@ function Level(canvasid,textures,lvldata,updateCallback) {
           // Check if it bounces on a border
           for(let j = 0;j < points.length;j++) {
             let line = [points[j],points[(j + 1) % points.length]]
-            if(distance2line(player.coords,line) <= this.ballSize) { // ball touched a border
+            let interp = intersection(line,motionVec)
+            if(!Number.isNaN(interp)) {
+              if(player.bouncedFrom == undefined || !sameLine(player.bouncedFrom,line)) {
+                let sp = distance(motionVec[0],motionVec[1])
+                if(sp > this.ballSize) {
+                  player.bouncedFrom = line
+                  let mv = scalevec(unitvec(motionVec),sp - this.ballSize)
+                  player.coords = translate(player.coords,mv)
+                  player.speed = reflect(player.speed,normal(line2vec(line)))
+                  return player
+                }
+              }
+              console.log(interp,line,motionVec,pc,player.speed)
+            }
+            if(distance2line(pc,line) <= this.ballSize) { // ball touched a border
               if(player.bouncedFrom == undefined || !sameLine(player.bouncedFrom,line)) {
                 player.speed = reflect(player.speed,normal(line2vec(line)))
+                player.bouncedFrom = line
+                return player
               }
-              player.bouncedFrom = line
             }
           }
         }
@@ -130,6 +151,7 @@ function Level(canvasid,textures,lvldata,updateCallback) {
   // Draws a player ball
   this.drawPlayer = (coords,color) => {
     drawCircle(this.context,coords,this.ballSize,1,color,'black')
+    drawLine(this.context,[coords,translate(coords,this.players[0].speed)],2,'red')
   }
 
   // Draws the club

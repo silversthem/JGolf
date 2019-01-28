@@ -23,6 +23,16 @@ function drawCross(context,coords,size,width,color) {
   context.stroke()
 }
 
+// Draws a line
+function drawLine(context,line,width,color) {
+  context.lineWidth = width
+  context.strokeStyle = color
+  context.beginPath()
+  context.moveTo(line[0][0],line[0][1])
+  context.lineTo(line[1][0],line[1][1])
+  context.stroke()
+}
+
 // Draws a circle
 function drawCircle(context,coords,radius,lineWidth,fillColor,strokeColor) {
   context.lineWidth = lineWidth
